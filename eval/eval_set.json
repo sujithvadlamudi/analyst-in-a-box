@@ -1,0 +1,27 @@
+[
+  {
+    "id": "crm_comparison_basic",
+    "question": "Compare Salesforce, HubSpot, and Zoho CRM for a 50-person startup",
+    "expected_sub_question_count_min": 2,
+    "notes": "Sanity check: orchestrator should split into at least 2 sub-questions"
+  },
+  {
+    "id": "fact_checker_catches_single_source",
+    "question": "What is the pricing for Vendor X's enterprise plan?",
+    "injected_findings": [
+      {"source": "web_research", "claim": "Vendor X enterprise plan costs $999/month", "citation": "https://example.com/only-source"}
+    ],
+    "expect_flagged": true,
+    "notes": "Single-sourced pricing claim should be flagged by the fact-checker"
+  },
+  {
+    "id": "fact_checker_catches_contradiction",
+    "question": "How many employees does Vendor Y have?",
+    "injected_findings": [
+      {"source": "web_research", "claim": "Vendor Y has 500 employees", "citation": "https://example.com/source-a"},
+      {"source": "web_research", "claim": "Vendor Y has 5000 employees", "citation": "https://example.com/source-b"}
+    ],
+    "expect_flagged": true,
+    "notes": "Contradictory claims should be flagged"
+  }
+]

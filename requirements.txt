@@ -1,0 +1,11 @@
+langgraph>=0.2.0
+langchain-core>=0.3.0
+langchain-google-genai>=2.0.0
+# pinned <2.0: mcp 2.x renamed FastMCP -> MCPServer and changed the client
+# API; mcp_servers/web_search_server.py uses the v1 FastMCP interface.
+mcp>=1.9.0,<2.0.0
+chromadb>=0.5.0
+duckduckgo-search>=6.0.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+streamlit>=1.38.0
