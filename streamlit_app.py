@@ -9,10 +9,10 @@ instead of something a recruiter has to clone and run themselves.
 
 Run locally with:
     streamlit run streamlit_app.py
-(reads GOOGLE_API_KEY from .env, same as main.py)
+(reads GOOGLE_API_KEY and TAVILY_API_KEY from .env, same as main.py)
 
-Deployed, it reads GOOGLE_API_KEY from Streamlit's Secrets manager
-instead -- see the README for setup.
+Deployed, it reads both from Streamlit's Secrets manager instead --
+see the README for setup.
 """
 
 import os
@@ -29,6 +29,8 @@ import streamlit as st
 try:
     if "GOOGLE_API_KEY" in st.secrets:
         os.environ.setdefault("GOOGLE_API_KEY", st.secrets["GOOGLE_API_KEY"])
+    if "TAVILY_API_KEY" in st.secrets:
+        os.environ.setdefault("TAVILY_API_KEY", st.secrets["TAVILY_API_KEY"])
 except Exception:
     pass
 
@@ -65,6 +67,15 @@ if not os.environ.get("GOOGLE_API_KEY"):
         "GOOGLE_API_KEY is not set. If you're running this locally, add it "
         "to a .env file. If this is the deployed app, add it under "
         "Settings -> Secrets."
+    )
+    st.stop()
+
+if not os.environ.get("TAVILY_API_KEY"):
+    st.error(
+        "TAVILY_API_KEY is not set. If you're running this locally, add it "
+        "to a .env file. If this is the deployed app, add it under "
+        "Settings -> Secrets. Get a free key (no credit card) at "
+        "https://tavily.com."
     )
     st.stop()
 
