@@ -16,6 +16,13 @@ import asyncio
 import sys
 from pathlib import Path
 
+# Force line-buffered stdout. Without this, print() output can sit in a
+# buffer and never reach hosted-platform log viewers (e.g. Streamlit
+# Cloud) until the process exits -- which made earlier debugging on that
+# platform show generic library log lines but none of this project's own
+# diagnostic prints (the [research: ...] retry/failure messages below).
+sys.stdout.reconfigure(line_buffering=True)
+
 from dotenv import load_dotenv
 
 load_dotenv()  # reads GOOGLE_API_KEY from .env into the environment
