@@ -10,7 +10,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from graph.state import GraphState
 from agents.utils import call_llm, get_text
 
-llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.3)
+llm = ChatGoogleGenerativeAI(model="gemini-flash-lite-latest", temperature=0.3)
 
 SYSTEM_PROMPT = """You are a business report writer. Given an approved outline \
 and a list of verified findings with citations, write a polished report. \

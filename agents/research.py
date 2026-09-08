@@ -25,7 +25,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from graph.state import GraphState
 from agents.utils import call_llm, get_text
 
-llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-flash-lite-latest", temperature=0)
 
 EXTRACTION_PROMPT = """Given these search results for the question "{question}", \
 extract 2-3 specific, factual claims. For each claim, note the source URL.
