@@ -48,6 +48,15 @@ def get_text(response) -> str:
     return str(content).strip()
 
 
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """Detect a 429/rate-limit error across different exception classes
+    and library versions, by checking the message rather than relying
+    on a specific exception type (which varies between google-genai
+    SDK versions)."""
+    text = str(exc).upper()
+    return "429" in text or "RESOURCE_EXHAUSTED" in text or "RATE LIMIT" in text
+
+
 def call_llm(llm, messages: list[dict], node_name: str, max_retries: int = 2):
     last_error = None
     for attempt in range(1, max_retries + 2):  # e.g. max_retries=2 -> 3 tries total
@@ -56,9 +65,18 @@ def call_llm(llm, messages: list[dict], node_name: str, max_retries: int = 2):
         except Exception as exc:  # broad on purpose: API/network errors vary a lot
             last_error = exc
             if attempt <= max_retries:
-                wait = 2 ** (attempt - 1)  # 1s, 2s, 4s...
+                if _is_rate_limit_error(exc):
+                    # The free tier is roughly 10-15 requests/minute.
+                    # A short 1s/2s backoff just re-hits the same
+                    # per-minute window and gets 429'd again immediately.
+                    # Wait long enough for the rolling window to clear.
+                    wait = 20 * attempt  # 20s, 40s...
+                    reason = "rate limited (free tier)"
+                else:
+                    wait = 2 ** (attempt - 1)  # 1s, 2s, 4s...
+                    reason = exc.__class__.__name__
                 print(
-                    f"  [{node_name}] call failed ({exc.__class__.__name__}), "
+                    f"  [{node_name}] call failed ({reason}), "
                     f"retrying in {wait}s (attempt {attempt}/{max_retries})..."
                 )
                 time.sleep(wait)

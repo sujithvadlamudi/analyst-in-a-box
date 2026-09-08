@@ -35,6 +35,17 @@ from agents.utils import AgentError
 _MCP_SERVER_PATH = Path(__file__).parent / "mcp_servers" / "web_search_server.py"
 
 
+async def _staggered_research(sub_question: str, mcp_session, delay: float) -> dict:
+    # Small stagger between the parallel research agents' *first* LLM
+    # call. Firing 3-4 calls in the exact same instant is itself enough
+    # to spike past the free tier's per-minute limit, even before any
+    # retries happen. This keeps the burst rate down without giving up
+    # real concurrency -- the searches and later calls still overlap.
+    if delay:
+        await asyncio.sleep(delay)
+    return await research_node({}, sub_question, mcp_session)
+
+
 async def _fanout_once(sub_questions: list[str]) -> list[dict]:
     server_params = StdioServerParameters(
         # sys.executable, not the string "python" -- guarantees the exact
@@ -49,7 +60,8 @@ async def _fanout_once(sub_questions: list[str]) -> list[dict]:
         async with ClientSession(read, write) as session:
             await session.initialize()
             tasks = [
-                research_node({}, q, session) for q in sub_questions
+                _staggered_research(q, session, delay=i * 3)
+                for i, q in enumerate(sub_questions)
             ]
             # return_exceptions=True: research_node already catches its
             # own errors and returns {"findings": []} on failure, but
