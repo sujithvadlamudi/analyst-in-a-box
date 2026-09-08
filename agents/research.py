@@ -69,7 +69,27 @@ async def research_node(
             # automatically from the `-> list[dict]` return annotation.
             if tool_result.isError:
                 raise RuntimeError(f"web_search tool error: {tool_result.content}")
-            results = tool_result.structuredContent["result"]
+            candidate_results = tool_result.structuredContent["result"]
+            if not candidate_results:
+                # A "successful" call that returned zero hits is NOT a
+                # success for this project's purposes. DuckDuckGo often
+                # rate-limits or silently blocks requests from shared
+                # cloud/datacenter IPs (e.g. Streamlit Cloud) without
+                # raising an error -- it just returns an empty list.
+                # Left unchecked, that empty list flows into the
+                # extraction prompt below, and the LLM will happily
+                # fabricate a plausible-looking report with placeholder
+                # citations (https://example.com/...) instead of failing
+                # honestly. Since this project's entire premise is
+                # sourced, verified claims, an empty result set must be
+                # treated as a failure and retried, same as a real error.
+                # Using a separate variable (not the outer `results`)
+                # here matters: if this is the LAST attempt, we want
+                # `results` to stay None so the check below correctly
+                # treats it as a total failure, not silently falling
+                # through with an empty list.
+                raise RuntimeError("web_search returned zero results")
+            results = candidate_results
             break
         except Exception as exc:
             last_error = exc
