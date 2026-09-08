@@ -13,6 +13,7 @@ Walks through:
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -61,7 +62,19 @@ async def _fanout_once(sub_questions: list[str]) -> list[dict]:
         # (e.g. Streamlit Cloud's containers) there's no "python" on PATH,
         # only "python3" or a specific versioned binary, so a bare
         # "python" command fails with FileNotFoundError.
-        command=sys.executable, args=[str(_MCP_SERVER_PATH)]
+        command=sys.executable, args=[str(_MCP_SERVER_PATH)],
+        # StdioServerParameters does NOT inherit the parent process's
+        # environment by default -- it deliberately only passes through
+        # a small safe allowlist (PATH, HOME, etc.) as a security
+        # measure, so a leaked env var can't reach an arbitrary spawned
+        # process. That means TAVILY_API_KEY never reached the MCP
+        # server subprocess even though it was correctly set in this
+        # process's environment (from .env locally, or Streamlit Secrets
+        # when deployed) -- the subprocess just silently didn't have it.
+        # Since we're spawning our own trusted script here, not a
+        # third-party one, passing the full environment through is safe
+        # and is what actually fixes this.
+        env=dict(os.environ),
     )
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
