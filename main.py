@@ -14,6 +14,7 @@ Walks through:
 
 import asyncio
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -26,10 +27,23 @@ from graph.build_graph import build_graph
 from agents.research import research_node
 from agents.utils import AgentError
 
+# Absolute path to the MCP server script, resolved relative to this file --
+# not the current working directory. A relative path like
+# "mcp_servers/web_search_server.py" only works if the process is launched
+# from the project root; hosted platforms (e.g. Streamlit Cloud) don't
+# guarantee that, so this fails silently there otherwise.
+_MCP_SERVER_PATH = Path(__file__).parent / "mcp_servers" / "web_search_server.py"
+
 
 async def _fanout_once(sub_questions: list[str]) -> list[dict]:
     server_params = StdioServerParameters(
-        command="python", args=["mcp_servers/web_search_server.py"]
+        # sys.executable, not the string "python" -- guarantees the exact
+        # same interpreter (and venv) that's running this process is used
+        # to launch the MCP server subprocess. On some hosted platforms
+        # (e.g. Streamlit Cloud's containers) there's no "python" on PATH,
+        # only "python3" or a specific versioned binary, so a bare
+        # "python" command fails with FileNotFoundError.
+        command=sys.executable, args=[str(_MCP_SERVER_PATH)]
     )
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
