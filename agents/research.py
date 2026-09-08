@@ -50,8 +50,17 @@ async def research_node(
 
     for attempt in range(1, max_retries + 2):
         try:
-            tool_result = await mcp_session.call_tool(
-                "web_search", arguments={"query": sub_question, "max_results": 5}
+            # 20s timeout: the underlying search library has no timeout
+            # of its own, and on a shared/cloud IP it can occasionally
+            # stall indefinitely (rate-limited but not erroring) instead
+            # of failing fast. Without this, a single stuck search hangs
+            # the whole app forever instead of triggering the retry
+            # logic below.
+            tool_result = await asyncio.wait_for(
+                mcp_session.call_tool(
+                    "web_search", arguments={"query": sub_question, "max_results": 5}
+                ),
+                timeout=20,
             )
             # call_tool returns an mcp.types.CallToolResult, not a plain
             # list -- iterating it directly yields (field_name, value)
