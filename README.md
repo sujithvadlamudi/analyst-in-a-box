@@ -33,7 +33,7 @@ Most "AI agent" portfolio projects are a single LLM call with a system prompt.
 This one is a real state machine (LangGraph) with:
 
 - **Parallel specialist agents**, not a linear chain
-- **A self-authored MCP server** — the research agents call tools over the Model
+- **A self-authored MCP server** the research agents call tools over the Model
   Context Protocol (Tavily search) rather than hitting APIs directly in agent code
 - **A fact-checker** that flags single-sourced or contradictory claims
 - **A human-in-the-loop approval gate** before the expensive drafting step runs
